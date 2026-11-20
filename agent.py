@@ -48,12 +48,6 @@ class FinancialResponse(BaseModel):
 # ==========================================
 
 rag = FinancialRAG()
-
-rag.ingest_pdfs([
-    "data/FINAL Annual Report.pdf"
-])
-
-
 # ==========================================
 # 3. TOOL 1: ANNUAL REPORT SEARCH
 # ==========================================
