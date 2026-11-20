@@ -1,0 +1,22 @@
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.vscode/
+
+# Generated indexes
+faiss_index/
+uploaded_reports/
+
+# Temporary files
+*.log
+.DS_Store
