@@ -251,6 +251,25 @@ def get_financial_response(
     )
 
     return final_answer
+def run_agent(question, thread_id):
+
+    response = agent.invoke(
+        {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ]
+        },
+        config={
+            "configurable": {
+                "thread_id": thread_id
+            }
+        }
+    )
+
+    return response
 
 
 # ==========================================
@@ -287,3 +306,4 @@ if __name__ == "__main__":
             print(f"\nError: {e}")
 
         print("\n" + "-" * 60)
+

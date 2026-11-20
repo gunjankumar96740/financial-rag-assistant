@@ -64,8 +64,12 @@ if uploaded_file:
                 st.session_state.messages = []
                 st.session_state.thread_id = str(uuid.uuid4())
 
-            except requests.exceptions.RequestException as e:
-                st.error(f"Upload Error: {e}")
+            except requests.HTTPError:
+                st.error(f"Upload failed: {response.status_code}")
+                st.code(response.text)
+
+            except requests.RequestException as e:
+                st.error(f"Connection Error: {e}")
 
             except ValueError:
                 st.error("Backend returned an invalid JSON response.")
