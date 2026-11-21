@@ -3,8 +3,13 @@ import streamlit as st
 import requests
 import uuid
 
-# Backend URL from Streamlit Cloud Secrets
+# API Configuration
 API_URL = st.secrets["API_URL"].rstrip("/")
+API_KEY = st.secrets["API_KEY"]
+
+HEADERS = {
+    "X-API-Key": API_KEY
+}
 
 st.set_page_config(
     page_title="Financial RAG",
@@ -15,14 +20,15 @@ st.set_page_config(
 st.title("📊 Financial RAG Assistant")
 st.caption("Upload financial reports and ask questions about them.")
 
-# Session management
+# Session Management
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = str(uuid.uuid4())
 
-# PDF Upload Section
+
+# PDF Upload
 st.subheader("📄 Upload Financial Report")
 
 uploaded_file = st.file_uploader(
@@ -31,6 +37,7 @@ uploaded_file = st.file_uploader(
 )
 
 if uploaded_file:
+
     st.write(f"Selected file: {uploaded_file.name}")
 
     if st.button("Upload and Process PDF"):
@@ -47,20 +54,17 @@ if uploaded_file:
                             "application/pdf"
                         )
                     },
+                    headers=HEADERS,
                     timeout=600
                 )
 
                 response.raise_for_status()
+
                 result = response.json()
 
-                st.success(
-                    result.get(
-                        "message",
-                        "PDF uploaded and indexed successfully!"
-                    )
-                )
+                st.success(result.get("message", "PDF processed successfully!"))
 
-                # Reset conversation after new document upload
+                # Reset conversation
                 st.session_state.messages = []
                 st.session_state.thread_id = str(uuid.uuid4())
 
@@ -72,26 +76,25 @@ if uploaded_file:
                 st.error(f"Connection Error: {e}")
 
             except ValueError:
-                st.error("Backend returned an invalid JSON response.")
+                st.error("Invalid response from backend.")
+
 
 st.divider()
+
 
 # Chat Section
 st.subheader("💬 Ask Financial Questions")
 
-# Display previous messages
+# Display chat history
 for message in st.session_state.messages:
+
     with st.chat_message(message["role"]):
         st.write(message["content"])
+
 
 question = st.chat_input("Ask a financial question...")
 
 if question:
-
-    st.session_state.messages.append({
-        "role": "user",
-        "content": question
-    })
 
     with st.chat_message("user"):
         st.write(question)
@@ -107,6 +110,7 @@ if question:
                         "question": question,
                         "thread_id": st.session_state.thread_id
                     },
+                    headers=HEADERS,
                     timeout=180
                 )
 
@@ -117,13 +121,23 @@ if question:
 
                 st.write(answer)
 
+                # Save successful conversation
+                st.session_state.messages.append({
+                    "role": "user",
+                    "content": question
+                })
+
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": answer
                 })
 
-            except requests.exceptions.RequestException as e:
-                st.error(f"API Error: {e}")
+            except requests.HTTPError:
+                st.error(f"API Error: {response.status_code}")
+                st.code(response.text)
+
+            except requests.RequestException as e:
+                st.error(f"Connection Error: {e}")
 
             except (ValueError, KeyError):
-                st.error("Invalid response received from the backend.")
+                st.error("Invalid response received from backend.")
